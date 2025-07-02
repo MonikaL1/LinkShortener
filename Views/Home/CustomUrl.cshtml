@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Custom URL Aliases</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #6a11cb;
+      --secondary-color: #2575fc;
+      --background-color: #121212;
+      --surface-color: #1e1e1e;
+      --text-color: #e0e0e0;
+      --text-muted-color: #888;
+      --success-color: #4CAF50;
+      --error-color: #f44336;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      background-color: var(--background-color);
+      color: var(--text-color);
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+    }
+
+    /* === HEADER STYLES ADDED (Copied from QR Code page) === */
+    .hero-section {
+        padding: 4rem 0;
+        text-align: center;
+    }
+
+    .hero-section h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-section .subtitle {
+        font-size: 1.2rem;
+        color: var(--text-muted-color);
+        margin-bottom: 2.5rem;
+    }
+    /* === END OF ADDED STYLES === */
+
+    .form-container-wrapper {
+        max-width: 600px;
+        width: 100%;
+        padding: 0 2rem 2rem 2rem;
+        margin: 0 auto;
+    }
+
+    .shortener-form {
+      background-color: var(--surface-color);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-group label {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-muted-color);
+    }
+
+    .input-group input {
+      padding: 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: var(--text-color);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .input-group input:focus {
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.3);
+    }
+
+    .form-button {
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s;
+    }
+
+    .form-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    #result-section,
+    #error-message {
+      background-color: var(--surface-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      display: none;
+    }
+
+    .result-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .result-text {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .result-content p {
+      margin: 0;
+      color: var(--text-muted-color);
+      font-size: 0.9rem;
+    }
+
+    .result-content a {
+      color: var(--secondary-color);
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result-content a:hover {
+      text-decoration: underline;
+    }
+
+    #copy-button {
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    #copy-button:hover {
+      background-color: #444;
+    }
+
+    #copy-button.copied {
+      background-color: var(--success-color);
+      border-color: var(--success-color);
+    }
+
+    #error-message {
+      border-left: 4px solid var(--error-color);
+    }
+
+    #error-text {
+      color: var(--error-color);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero-section">
+      <h1>Create a Custom Alias</h1>
+      <p class="subtitle">Make your links memorable with a custom name that reflects your brand. </p>
+
+  </section>
+
+  <div class="form-container-wrapper">
+    <div class="shortener-form">
+      <form id="shorten-form">
+        <div class="form-container">
+          <div class="input-group">
+            <label for="long-url">Your Long URL</label>
+            <input type="url" id="long-url" name="longUrl" placeholder="https://example.com/your-destination" required />
+          </div>
+          <div class="input-group">
+            <label for="custom-alias">Your Desired Alias</label>
+            <input type="text" id="custom-alias" name="customAlias" placeholder="my-cool-link" required />
+          </div>
+          <button type="submit" class="form-button">Create Custom Link</button>
+        </div>
+      </form>
+
+      <div id="result-section">
+        <div class="result-content">
+          <div class="result-text">
+            <p>Your custom short link is ready!</p>
+            <a id="shortened-link" href="#" target="_blank"></a>
+          </div>
+          <button id="copy-button">Copy</button>
+        </div>
+      </div>
+
+      <div id="error-message">
+        <p id="error-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('shorten-form');
+    const resultSection = document.getElementById('result-section');
+    const errorSection = document.getElementById('error-message');
+    const shortenedLink = document.getElementById('shortened-link');
+    const errorText = document.getElementById('error-text');
+    const copyButton = document.getElementById('copy-button');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resultSection.style.display = 'none';
+      errorSection.style.display = 'none';
+
+      const longUrl = document.getElementById('long-url').value;
+      const customAlias = document.getElementById('custom-alias').value;
+
+      if (customAlias === 'taken') {
+        errorText.textContent = `The alias '${customAlias}' is already in use.`;
+        errorSection.style.display = 'block';
+      } else if (longUrl && customAlias) {
+        const protocol = window.location.protocol;
+        const host = window.location.host;
+        const realisticShortUrl = `${protocol}//${host}/${customAlias}`;
+        
+        shortenedLink.href = longUrl;
+        shortenedLink.textContent = realisticShortUrl;
+        resultSection.style.display = 'block';
+
+        setTimeout(() => {
+          resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      } else {
+        errorText.textContent = 'Please fill out all fields.';
+        errorSection.style.display = 'block';
+      }
+    });
+
+    copyButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(shortenedLink.textContent).then(() => {
+        copyButton.textContent = 'Copied!';
+        copyButton.classList.add('copied');
+        setTimeout(() => {
+          copyButton.textContent = 'Copy';
+          copyButton.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy. Please copy the link manually.');
+      });
+    });
+  </script>
+</body>
+</html>

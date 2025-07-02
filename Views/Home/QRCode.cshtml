@@ -1,0 +1,479 @@
+@{
+    ViewData["Title"] = "Free QR Code Generator";
+}
+
+<!-- 1. Include the QR Code generation library -->
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+
+<style>
+    /* Reusing the color variables and base styles from your main page for consistency */
+    :root {
+        --primary-color: #6a11cb;
+        --secondary-color: #2575fc;
+        --background-color: #121212;
+        --surface-color: #1e1e1e;
+        --text-color: #e0e0e0;
+        --text-muted-color: #888;
+    }
+    
+    /* Header and Hero Section Styling */
+    .hero-section {
+        padding: 4rem 0;
+        text-align: center;
+    }
+
+    .hero-section h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-section .subtitle {
+        font-size: 1.2rem;
+        color: var(--text-muted-color);
+        margin-bottom: 2.5rem;
+    }
+
+    /* Page-specific styles */
+    .qr-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    @@media (min-width: 992px) {
+        .qr-container {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+
+    .config-panel, .preview-panel {
+        background-color: var(--surface-color);
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .preview-panel {
+        text-align: center;
+    }
+
+    /* Styling for the input tabs */
+    .nav-tabs {
+        border-bottom: 1px solid #444;
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-tabs .nav-link {
+        background-color: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--text-muted-color);
+        transition: all 0.3s ease;
+    }
+
+    .nav-tabs .nav-link.active {
+        background-color: transparent;
+        color: var(--secondary-color);
+        border-bottom: 3px solid var(--secondary-color);
+    }
+
+    /* Form input styling */
+    .form-control-dark {
+        background-color: #2a2a2a;
+        color: var(--text-color);
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 0.75rem;
+    }
+
+    .form-control-dark:focus {
+        background-color: #2a2a2a;
+        color: var(--text-color);
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.3);
+    }
+    
+    .form-control-dark[type="file"] {
+        cursor: pointer;
+    }
+
+    .form-label {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    /* Customization controls styling */
+    .customize-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #333;
+    }
+
+    .color-picker-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .color-picker-wrapper input[type="color"] {
+        width: 40px;
+        height: 40px;
+        border: none;
+        padding: 0;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    
+    /* QR Code Preview Styling */
+    #qrcode-preview {
+        padding: 1rem;
+        background: #fff; /* Default white background */
+        border-radius: 8px;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+    }
+
+    #qrcode-preview canvas, #qrcode-preview img {
+        display: block;
+    }
+    
+    /* Button Styling */
+    .btn-gradient {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        color: #fff;
+    }
+
+</style>
+
+<!-- Page Header -->
+<section class="hero-section">
+    <h1>Turn Your Links into QR Codes</h1>
+    <p class="subtitle">Easily convert your links into scannable QR codes for quick access and sharing anywhere.</p>
+</section>
+
+
+<div class="qr-container">
+    <!-- Left Panel: Configuration -->
+    <div class="config-panel">
+        <!-- Tabs for different data types -->
+        <ul class="nav nav-tabs" id="qrTypeTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="url-tab" data-bs-toggle="tab" data-bs-target="#url-content" type="button" role="tab">URL</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab">Text</button>
+            </li>
+             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-content" type="button" role="tab">Image</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email-content" type="button" role="tab">Email</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sms-tab" data-bs-toggle="tab" data-bs-target="#sms-content" type="button" role="tab">SMS</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="note-tab" data-bs-toggle="tab" data-bs-target="#note-content" type="button" role="tab">Note</button>
+            </li>
+        </ul>
+
+        <!-- Content for the tabs -->
+        <div class="tab-content" id="qrTypeTabContent">
+            <!-- URL Input -->
+            <div class="tab-pane fade show active" id="url-content" role="tabpanel">
+                <div class="mb-3">
+                    <label for="urlInput" class="form-label">Your URL</label>
+                    <input type="url" class="form-control form-control-dark" id="urlInput" placeholder="https://example.com" oninput="handleTextInputChange()">
+                </div>
+            </div>
+            <!-- Text Input -->
+            <div class="tab-pane fade" id="text-content" role="tabpanel">
+                 <div class="mb-3">
+                    <label for="textInput" class="form-label">Your Text</label>
+                    <textarea class="form-control form-control-dark" id="textInput" rows="3" placeholder="Enter any text" oninput="handleTextInputChange()"></textarea>
+                </div>
+            </div>
+            <!-- Image Input -->
+            <div class="tab-pane fade" id="image-content" role="tabpanel">
+                <div class="mb-3">
+                    <label for="imageInput" class="form-label">Upload Image</label>
+                    <input type="file" class="form-control form-control-dark" id="imageInput" accept="image/*" onchange="handleFileInputChange()">
+                    <div class="form-text mt-2" style="color: var(--text-muted-color);">Note: Large images create complex QR codes that can be hard to scan.</div>
+                </div>
+            </div>
+            <!-- Email Input -->
+            <div class="tab-pane fade" id="email-content" role="tabpanel">
+                 <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="emailAddress" class="form-label">Email Address</label>
+                        <input type="email" class="form-control form-control-dark" id="emailAddress" placeholder="you@example.com" oninput="handleTextInputChange()">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="emailSubject" class="form-label">Subject</label>
+                        <input type="text" class="form-control form-control-dark" id="emailSubject" placeholder="Email subject" oninput="handleTextInputChange()">
+                    </div>
+                </div>
+            </div>
+             <!-- SMS Input -->
+            <div class="tab-pane fade" id="sms-content" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="smsPhone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control form-control-dark" id="smsPhone" placeholder="+1234567890" oninput="handleTextInputChange()">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="smsMessage" class="form-label">Message</label>
+                        <textarea class="form-control form-control-dark" id="smsMessage" rows="3" placeholder="Enter your message" oninput="handleTextInputChange()"></textarea>
+                    </div>
+                </div>
+            </div>
+             <!-- General Note Input -->
+             <div class="tab-pane fade" id="note-content" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="noteTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control form-control-dark" id="noteTitle" oninput="handleTextInputChange()">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="noteDescription" class="form-label">Description</label>
+                        <textarea class="form-control form-control-dark" id="noteDescription" rows="4" oninput="handleTextInputChange()"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customization Section -->
+        <div class="customize-section">
+            <h5 class="mb-3">Customize</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Color</label>
+                    <div class="color-picker-wrapper">
+                         <input type="color" id="colorDark" value="#000000" onchange="generateQRCode()">
+                         <span>to</span>
+                         <input type="color" id="colorLight" value="#ffffff" onchange="generateQRCode()">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="qrSize" class="form-label">Size (px)</label>
+                    <select id="qrSize" class="form-control form-control-dark" onchange="generateQRCode()">
+                        <option value="128" selected>128x128</option>
+                        <option value="256">256x256</option>
+                        <option value="512">512x512</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Preview and Download -->
+    <div class="preview-panel">
+        <h5>Preview</h5>
+        <div id="qrcode-preview" class="mt-3">
+            <!-- The QR Code will be rendered here -->
+        </div>
+        <div class="download-controls mt-4">
+            <div class="row justify-content-center align-items-center gx-3">
+                <div class="col-auto" style="min-width: 100px;">
+                    <label for="downloadFormat" class="visually-hidden">Format</label>
+                    <select id="downloadFormat" class="form-control form-control-dark" onchange="updateDownloadLink()">
+                        <option value="png" selected>PNG</option>
+                        <option value="jpeg">JPG</option>
+                        <option value="svg">SVG</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <a id="downloadBtn" class="btn-gradient" download="qrcode.png">Download</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let qrcode = null; // To hold the QR code instance
+
+    function getTextToEncode() {
+        const activeTab = document.querySelector('.nav-tabs .nav-link.active').id;
+        let textToEncode = '';
+
+        switch (activeTab) {
+            case 'url-tab':
+                textToEncode = document.getElementById('urlInput').value;
+                break;
+            case 'text-tab':
+                textToEncode = document.getElementById('textInput').value;
+                break;
+            case 'email-tab':
+                const email = document.getElementById('emailAddress').value;
+                const subject = document.getElementById('emailSubject').value;
+                if (email) textToEncode = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+                break;
+            case 'sms-tab':
+                const phone = document.getElementById('smsPhone').value;
+                const message = document.getElementById('smsMessage').value;
+                if (phone) textToEncode = `SMSTO:${phone}:${encodeURIComponent(message)}`;
+                break;
+            case 'note-tab':
+                const title = document.getElementById('noteTitle').value;
+                const description = document.getElementById('noteDescription').value;
+                if (title || description) {
+                    textToEncode = `${title}\n\n${description}`;
+                }
+                break;
+        }
+        return textToEncode.trim();
+    }
+
+    // This function is for all text-based inputs
+    function handleTextInputChange() {
+        const text = getTextToEncode();
+        renderQRCode(text);
+    }
+    
+    // This function handles the async file reading
+    function handleFileInputChange() {
+        const fileInput = document.getElementById('imageInput');
+        const file = fileInput.files[0];
+        if (!file) {
+            renderQRCode(''); // Clear QR if no file
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            renderQRCode(e.target.result); // e.target.result is the Base64 string
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Central function to render the QR code from text
+    function renderQRCode(text) {
+        const previewEl = document.getElementById('qrcode-preview');
+        previewEl.innerHTML = ''; // Clear previous QR code
+        qrcode = null;
+        
+        if (!text) {
+            updateDownloadLink();
+            return;
+        }
+
+        const size = parseInt(document.getElementById('qrSize').value);
+        const colorDark = document.getElementById('colorDark').value;
+        const colorLight = document.getElementById('colorLight').value;
+        
+        previewEl.style.backgroundColor = colorLight;
+        
+        qrcode = new QRCode(previewEl, {
+            text: text,
+            width: size,
+            height: size,
+            colorDark: colorDark,
+            colorLight: colorLight,
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        
+        setTimeout(updateDownloadLink, 100);
+    }
+    
+    // Main function to decide what to do based on the active tab
+    function generateQRCode() {
+        const activeTab = document.querySelector('.nav-tabs .nav-link.active').id;
+        if (activeTab === 'image-tab') {
+            handleFileInputChange();
+        } else {
+            handleTextInputChange();
+        }
+    }
+
+    function updateDownloadLink() {
+        const downloadBtn = document.getElementById('downloadBtn');
+        const formatSelector = document.getElementById('downloadFormat');
+        
+        if (!qrcode) {
+            downloadBtn.href = "#";
+            downloadBtn.style.opacity = '0.5';
+            downloadBtn.style.cursor = 'not-allowed';
+            return;
+        }
+
+        downloadBtn.style.opacity = '1';
+        downloadBtn.style.cursor = 'pointer';
+
+        const selectedFormat = formatSelector.value;
+        const fileExtension = selectedFormat;
+        const mimeType = `image/${selectedFormat}`;
+        
+        if (selectedFormat === 'svg') {
+            const svgData = generateSVG();
+            const svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
+            downloadBtn.href = URL.createObjectURL(svgBlob);
+        } else {
+            const canvas = document.querySelector('#qrcode-preview canvas');
+            if (!canvas) return; // Exit if canvas is not ready
+            const colorLight = document.getElementById('colorLight').value;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            
+            const ctx = tempCanvas.getContext('2d');
+            ctx.fillStyle = colorLight;
+            ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            ctx.drawImage(canvas, 0, 0);
+
+            downloadBtn.href = tempCanvas.toDataURL(mimeType, 1.0);
+        }
+
+        downloadBtn.download = `qrcode.${fileExtension}`;
+    }
+    
+    function generateSVG() {
+        if (!qrcode || !qrcode._o) return '';
+
+        const options = qrcode._o;
+        const qrCodeModel = qrcode._o.qrCodeModel;
+        const moduleCount = qrCodeModel.getModuleCount();
+        
+        let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${options.width}" height="${options.height}" viewBox="0 0 ${moduleCount} ${moduleCount}">`;
+        svg += `<rect width="100%" height="100%" fill="${options.colorLight}" />`;
+
+        for (let row = 0; row < moduleCount; row++) {
+            for (let col = 0; col < moduleCount; col++) {
+                if (qrCodeModel.isDark(row, col)) {
+                    svg += `<rect x="${col}" y="${row}" width="1" height="1" fill="${options.colorDark}" />`;
+                }
+            }
+        }
+        svg += `</svg>`;
+        return svg;
+    }
+
+    document.querySelectorAll('#qrTypeTab .nav-link').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', generateQRCode);
+    });
+
+    window.onload = () => {
+        document.getElementById('urlInput').value = '';
+        generateQRCode();
+    };
+
+</script>

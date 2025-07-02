@@ -1,0 +1,346 @@
+@{
+    ViewData["Title"] = "Track URL Clicks";
+}
+
+<!-- Chart.js for data visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    :root {
+        --primary-color: #6a11cb;
+        --secondary-color: #2575fc;
+        --background-color: #121212;
+        --surface-color: #1e1e1e;
+        --text-color: #e0e0e0;
+        --text-muted-color: #888;
+    }
+
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }
+
+    .hero-section {
+        padding: 4rem 0 2rem; /* Reduced bottom padding */
+        text-align: center;
+    }
+
+    .hero-section h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-section .subtitle {
+        font-size: 1.2rem;
+        color: var(--text-muted-color);
+        margin-bottom: 2.5rem;
+    }
+    
+    .info-section {
+        padding-top: 0; /* Reduced top padding */
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+
+    .info-section p {
+        font-size: 1.1rem;
+        color: var(--text-muted-color);
+        line-height: 1.8;
+    }
+
+    .image-stack img {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        border: 1px solid #333;
+        border-radius: 12px;
+    }
+
+    .tracking-form {
+        background-color: var(--surface-color);
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    @@media (min-width: 768px) {
+        .form-group {
+            flex-direction: row;
+        }
+    }
+
+    .form-group input[type="text"] {
+        flex-grow: 1;
+        padding: 1rem;
+        font-size: 1rem;
+        border: 1px solid #444;
+        border-radius: 8px;
+        background-color: #2a2a2a;
+        color: var(--text-color);
+        outline: none;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .form-group input[type="text"]:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.3);
+    }
+
+    .btn-solid-blue {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        background-color: var(--secondary-color);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.3s;
+        text-decoration: none;
+    }
+
+    .btn-solid-blue:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 117, 252, 0.3);
+    }
+
+    #analytics-dashboard {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    .stats-card {
+        background-color: var(--surface-color);
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        height: 100%;
+    }
+
+    .stats-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--secondary-color);
+    }
+
+    .stats-card .stat-label {
+        font-size: 1rem;
+        color: var(--text-muted-color);
+        margin-bottom: 0;
+    }
+
+    .list-group-dark .list-group-item {
+        background-color: transparent;
+        border-color: #333;
+        color: var(--text-color);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <h1>Track Your Link's Performance</h1>
+    <p class="subtitle">Gain insights into every click and understand your audience.</p>
+</section>
+
+<!-- This is the new section you requested -->
+<section class="info-section">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+            <p>
+                Knowledge is power. By tracking your links, you move beyond just sharing and start understanding your impact. See which channels drive the most engagement, learn where your audience is located, and discover the best times to share your content.
+            </p>
+            <p>
+                Our simple, clean dashboard removes the guesswork, presenting you with clear, actionable data. Turn every click into a valuable insight and make smarter decisions to grow your reach. Check your Shorten Link below ⏬
+            </p>
+        </div>
+        <div class="col-lg-6">
+            <div class="image-stack">
+                <img src="@Url.Content("~/images/image.png")" class="img-fluid mb-4" alt="Analytics Chart">
+                <img src="@Url.Content("~/images/image2.png")" class="img-fluid" alt="Geographic Data">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Tracking Form -->
+<div class="tracking-form">
+    <form id="trackUrlForm">
+        <div class="form-group">
+            <input type="text" id="shortUrlInput" placeholder="Enter your short URL (e.g., http://your-domain/a50353)" required />
+            <button type="submit" class="btn-solid-blue">Track</button>
+        </div>
+    </form>
+</div>
+
+<!-- Analytics Dashboard -->
+<div id="analytics-dashboard">
+    <div class="row g-4">
+        <!-- Total Clicks -->
+        <div class="col-lg-4 col-md-6">
+            <div class="stats-card">
+                <p class="stat-value">0</p>
+                <p class="stat-label">Total Clicks</p>
+            </div>
+        </div>
+
+        <!-- Original URL -->
+        <div class="col-lg-8 col-md-6">
+            <div class="stats-card">
+                <p class="stat-label mb-2">Original Destination</p>
+                <a href="#" class="text-break" style="color: var(--secondary-color); font-weight: 500;"></a>
+            </div>
+        </div>
+
+        <!-- Clicks Chart -->
+        <div class="col-12">
+            <div class="stats-card">
+                <h5 class="mb-3">Clicks Over Time (Last 7 Days)</h5>
+                <div class="chart-container">
+                    <canvas id="clicksChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Referrers -->
+        <div class="col-md-6">
+            <div class="stats-card">
+                <h5 class="mb-3">Top Referrers</h5>
+                <ul class="list-group list-group-flush list-group-dark" id="referrersList"></ul>
+            </div>
+        </div>
+
+        <!-- Top Countries -->
+        <div class="col-md-6">
+            <div class="stats-card">
+                <h5 class="mb-3">Top Countries</h5>
+                <ul class="list-group list-group-flush list-group-dark" id="countriesList"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script -->
+<script>
+    document.getElementById('trackUrlForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const shortUrlInput = document.getElementById('shortUrlInput').value.trim();
+        const shortCode = shortUrlInput.split('/').pop();
+
+        if (!shortCode) {
+            alert("Please enter a valid short URL.");
+            return;
+        }
+
+        fetch(`/api/stats/${shortCode}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Invalid or not found.');
+                return response.json();
+            })
+            .then(data => {
+                populateDashboard(data);
+
+                const dashboard = document.getElementById('analytics-dashboard');
+                dashboard.style.display = 'block';
+                setTimeout(() => { dashboard.style.opacity = 1; }, 10);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Could not retrieve stats for this link. Please check the URL and try again.");
+            });
+    });
+
+    function populateDashboard(data) {
+        document.querySelector('.stat-value').textContent = data.totalClicks;
+        const originalUrlLink = document.querySelector('.stats-card a');
+        originalUrlLink.href = data.originalUrl;
+        originalUrlLink.textContent = data.originalUrl;
+
+        const referrersList = document.getElementById('referrersList');
+        referrersList.innerHTML = '';
+        if (data.topReferrers.length) {
+            data.topReferrers.forEach(ref => {
+                referrersList.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${ref.referrer} <span>${ref.count}</span>
+                        </li>`;
+            });
+        } else {
+            referrersList.innerHTML = '<li class="list-group-item">No referrer data yet.</li>';
+        }
+
+        const countriesList = document.getElementById('countriesList');
+        countriesList.innerHTML = '';
+        if (data.topCountries.length) {
+            data.topCountries.forEach(country => {
+                countriesList.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${country.country} <span>${country.count}</span>
+                        </li>`;
+            });
+        } else {
+            countriesList.innerHTML = '<li class="list-group-item">No country data yet.</li>';
+        }
+
+        renderClicksChart(data.clicksByDay);
+    }
+
+    function renderClicksChart(clicksData) {
+        const ctx = document.getElementById('clicksChart').getContext('2d');
+
+        if (window.myClicksChart) {
+            window.myClicksChart.destroy();
+        }
+
+        const labels = clicksData.map(d => d.date);
+        const dataPoints = clicksData.map(d => d.count);
+
+        window.myClicksChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Clicks',
+                    data: dataPoints,
+                    backgroundColor: 'rgba(37, 117, 252, 0.5)',
+                    borderColor: 'rgba(37, 117, 252, 1)',
+                    borderWidth: 2,
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: 'rgba(255, 255, 255, 0.7)', stepSize: 1 },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: 'rgba(255, 255, 255, 0.7)' },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+</script>
